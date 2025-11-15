@@ -118,8 +118,8 @@ function App() {
 
   const handleAddMeme = async (title, url) => {
     if (!contract || !selectedAccount) {
-      setError('Подключите аккаунт');
-      return;
+      setError('Подключите аккаунт для добавления мема');
+      return false;
     }
 
     try {
@@ -130,17 +130,37 @@ function App() {
         proofSize: 1000000,
       });
 
-      await contract.tx
-        .addMeme({ gasLimit }, title, url)
-        .signAndSend(selectedAccount.address, { signer: injector.signer }, ({ status }) => {
-          if (status.isInBlock) {
-            console.log(`Транзакция в блоке: ${status.asInBlock}`);
-            // Перезагружаем мемы
-            setTimeout(loadMemes, 2000);
-          }
-        });
+      return new Promise((resolve, reject) => {
+        contract.tx
+          .addMeme({ gasLimit }, title, url)
+          .signAndSend(selectedAccount.address, { signer: injector.signer }, ({ status, events, dispatchError }) => {
+            if (status.isInBlock) {
+              console.log(`Транзакция в блоке: ${status.asInBlock}`);
 
-      return true;
+              // Проверяем на ошибки
+              if (dispatchError) {
+                if (dispatchError.isModule) {
+                  const decoded = api.registry.findMetaError(dispatchError.asModule);
+                  const { docs, name, section } = decoded;
+                  setError(`Ошибка контракта: ${section}.${name}: ${docs.join(' ')}`);
+                  reject(new Error(`${section}.${name}`));
+                } else {
+                  setError(`Ошибка транзакции: ${dispatchError.toString()}`);
+                  reject(dispatchError);
+                }
+              } else {
+                // Перезагружаем мемы после успешного добавления
+                setTimeout(loadMemes, 2000);
+                resolve(true);
+              }
+            }
+          })
+          .catch((err) => {
+            console.error('Ошибка отправки транзакции:', err);
+            setError(`Не удалось отправить транзакцию: ${err.message}`);
+            reject(err);
+          });
+      });
     } catch (err) {
       console.error('Ошибка добавления мема:', err);
       setError(`Ошибка: ${err.message}`);
@@ -150,8 +170,8 @@ function App() {
 
   const handleVote = async (memeId) => {
     if (!contract || !selectedAccount) {
-      setError('Подключите аккаунт');
-      return;
+      setError('Подключите аккаунт для голосования');
+      return false;
     }
 
     try {
@@ -162,17 +182,37 @@ function App() {
         proofSize: 1000000,
       });
 
-      await contract.tx
-        .voteUp({ gasLimit }, memeId)
-        .signAndSend(selectedAccount.address, { signer: injector.signer }, ({ status }) => {
-          if (status.isInBlock) {
-            console.log(`Голос записан в блоке: ${status.asInBlock}`);
-            // Перезагружаем мемы
-            setTimeout(loadMemes, 2000);
-          }
-        });
+      return new Promise((resolve, reject) => {
+        contract.tx
+          .voteUp({ gasLimit }, memeId)
+          .signAndSend(selectedAccount.address, { signer: injector.signer }, ({ status, dispatchError }) => {
+            if (status.isInBlock) {
+              console.log(`Голос записан в блоке: ${status.asInBlock}`);
 
-      return true;
+              // Проверяем на ошибки
+              if (dispatchError) {
+                if (dispatchError.isModule) {
+                  const decoded = api.registry.findMetaError(dispatchError.asModule);
+                  const { docs, name, section } = decoded;
+                  setError(`Ошибка голосования: ${section}.${name}: ${docs.join(' ')}`);
+                  reject(new Error(`${section}.${name}`));
+                } else {
+                  setError(`Ошибка транзакции: ${dispatchError.toString()}`);
+                  reject(dispatchError);
+                }
+              } else {
+                // Перезагружаем мемы после успешного голосования
+                setTimeout(loadMemes, 2000);
+                resolve(true);
+              }
+            }
+          })
+          .catch((err) => {
+            console.error('Ошибка отправки голоса:', err);
+            setError(`Не удалось отправить голос: ${err.message}`);
+            reject(err);
+          });
+      });
     } catch (err) {
       console.error('Ошибка голосования:', err);
       setError(`Ошибка: ${err.message}`);

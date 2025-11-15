@@ -2,24 +2,49 @@
 /node_modules
 /.pnp
 .pnp.js
+package-lock.json
+yarn.lock
 
 # Testing
 /coverage
+*.lcov
 
 # Production
 /build
+/dist
 
 # Misc
 .DS_Store
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
 # IDE
 .vscode
 .idea
+*.iml
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+*~
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# React and Create React App
+.eslintcache
+.stylelintcache

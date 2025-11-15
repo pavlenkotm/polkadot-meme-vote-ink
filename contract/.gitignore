@@ -2,8 +2,12 @@
 /target/
 **/*.rs.bk
 Cargo.lock
+*.pdb
 
 # ink! artifacts
 *.contract
 *.wasm
 metadata.json
+
+# Build artifacts
+/target-ink/
